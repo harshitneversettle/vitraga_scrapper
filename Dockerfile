@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ENV CHROME_PATH=/usr/bin/chromium
+ENV CHROMIUM_FLAGS="--disable-dev-shm-usage"
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./

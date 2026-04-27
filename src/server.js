@@ -15,6 +15,9 @@ async function getDriver() {
     "--disable-gpu",
     "--disable-blink-features=AutomationControlled",
     "--window-size=1920,1080",
+    "--shm-size=256m",
+    "--memory-pressure-off",
+    "--disable-features=VizDisplayCompositor",
   );
   options.addArguments(
     "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
