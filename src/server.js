@@ -20,6 +20,11 @@ async function getDriver() {
     "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   );
   options.excludeSwitches(["enable-automation"]);
+
+  if (process.env.CHROME_PATH) {
+    options.setChromeBinaryPath(process.env.CHROME_PATH);
+  }
+  options.excludeSwitches(["enable-automation"]);
   driver = await new Builder()
     .forBrowser("chrome")
     .setChromeOptions(options)
