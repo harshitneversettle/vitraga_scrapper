@@ -32,6 +32,10 @@ async function getDriver() {
   return driver;
 }
 
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 async function scrape() {
     const d = await getDriver();
     console.log("Browser launched");
