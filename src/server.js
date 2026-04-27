@@ -33,10 +33,13 @@ async function getDriver() {
 }
 
 async function scrape() {
-  const d = await getDriver();
-  await d.get("https://in.investing.com/commodities/metals");
-  await d.wait(until.elementLocated(By.css("table tbody tr")), 15000);
-  await d.sleep(1000);
+    const d = await getDriver();
+    console.log("Browser launched");
+    await d.get("https://in.investing.com/commodities/metals");
+    console.log("Page loaded");
+    await d.wait(until.elementLocated(By.css("table tbody tr")), 15000);
+    console.log("Table found");
+    await d.sleep(1000);
 
   const data = await d.executeScript(() => {
     const rows = document.querySelectorAll("table tbody tr");
