@@ -1,7 +1,6 @@
 import express from "express";
 import { Builder, By, until } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
-import { execSync } from "child_process";
 
 const app = express();
 let driver = null;
@@ -21,11 +20,9 @@ async function getDriver() {
     "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   );
   options.excludeSwitches(["enable-automation"]);
-
   if (process.env.CHROME_PATH) {
     options.setChromeBinaryPath(process.env.CHROME_PATH);
   }
-  options.excludeSwitches(["enable-automation"]);
   driver = await new Builder()
     .forBrowser("chrome")
     .setChromeOptions(options)
@@ -33,31 +30,11 @@ async function getDriver() {
   return driver;
 }
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.get("/chrome-path", (req, res) => {
-  try {
-    const path = execSync(
-      "which chromium || which chromium-browser || which google-chrome || which google-chrome-stable",
-    )
-      .toString()
-      .trim();
-    res.json({ path });
-  } catch (err) {
-    res.json({ error: "Chrome not found", msg: err.message });
-  }
-});
 async function scrape() {
-    const d = await getDriver();
-    console.log("Browser launched");
-    await d.get("https://in.investing.com/commodities/metals");
-    console.log("Page loaded");
-    await d.wait(until.elementLocated(By.css("table tbody tr")), 15000);
-    console.log("Table found");
-    await d.sleep(1000);
-
+  const d = await getDriver();
+  await d.get("https://in.investing.com/commodities/metals");
+  await d.wait(until.elementLocated(By.css("table tbody tr")), 15000);
+  await d.sleep(1000);
   const data = await d.executeScript(() => {
     const rows = document.querySelectorAll("table tbody tr");
     const results = [];
@@ -77,7 +54,6 @@ async function scrape() {
     });
     return results;
   });
-
   return data;
 }
 
@@ -90,5 +66,7 @@ app.get("/prices", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.get("/health", (_, res) => res.json({ status: "ok" }));
 
 app.listen(process.env.PORT || 3000, () => console.log("Running on port 3000"));
