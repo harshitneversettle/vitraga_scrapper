@@ -1,17 +1,23 @@
 import express from "express";
-import chromium from "chrome-aws-lambda";
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
-let cache = null;
 let browser = null;
 
 async function getBrowser() {
   if (browser) return browser;
   browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
+    headless: true,
+    executablePath: process.env.CHROME_PATH || null,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
   });
   return browser;
 }
@@ -19,13 +25,11 @@ async function getBrowser() {
 async function scrape() {
   const b = await getBrowser();
   const page = await b.newPage();
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0.0.0 Safari/537.36",
-  );
   await page.goto("https://in.investing.com/commodities/metals", {
     waitUntil: "networkidle2",
+    timeout: 30000,
   });
-  await page.waitForSelector("table tbody tr");
+  await page.waitForSelector("table tbody tr", { timeout: 15000 });
 
   const data = await page.evaluate(() => {
     const rows = document.querySelectorAll("table tbody tr");
@@ -48,19 +52,17 @@ async function scrape() {
   });
 
   await page.close();
-  cache = { data, updatedAt: new Date().toISOString() };
-  console.log("Updated at", cache.updatedAt);
+  return data;
 }
 
-scrape();
-setInterval(scrape, 5 * 60 * 1000);
-
-app.get("/prices", (req, res) => {
-  if (!cache)
-    return res
-      .status(503)
-      .json({ error: "Not ready yet, retry in few seconds" });
-  res.json(cache);
+app.get("/prices", async (req, res) => {
+  try {
+    const data = await scrape();
+    res.json({ data, fetchedAt: new Date().toISOString() });
+  } catch (err) {
+    browser = null;
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.listen(3000, () => console.log("Running on http://localhost:3000/prices"));
+app.listen(process.env.PORT || 3000, () => console.log("Running on port 3000"));
