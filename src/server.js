@@ -36,6 +36,18 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/chrome-path", (req, res) => {
+  try {
+    const path = execSync(
+      "which chromium || which chromium-browser || which google-chrome || which google-chrome-stable",
+    )
+      .toString()
+      .trim();
+    res.json({ path });
+  } catch (err) {
+    res.json({ error: "Chrome not found", msg: err.message });
+  }
+});
 async function scrape() {
     const d = await getDriver();
     console.log("Browser launched");
