@@ -1,6 +1,7 @@
 import express from "express";
 import { Builder, By, until } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
+import { execSync } from "child_process";
 
 const app = express();
 let driver = null;
